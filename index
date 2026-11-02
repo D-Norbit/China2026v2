@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Du Lịch Nhóm Live — Lịch Trình, OCR Hoá Đơn & Chia Tiền Tự Động</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; padding: 0; background: #f1f5f9; color: #0f172a; padding-bottom: 50px; }
+
+    .topbar { background: linear-gradient(135deg, #0f172a, #1e3a8a); color: #fff; padding: 12px 14px; position: sticky; top: 0; z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .topbar-inner { max-width: 1040px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .brand { font-size: 15.5px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+    .live-dot { background: #ef4444; color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 99px; font-weight: 700; animation: pulse 1.8s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+    .top-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .user-chip { background: rgba(255,255,255,0.16); padding: 6px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+    .btn { padding: 8px 12px; border: none; border-radius: 10px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; text-decoration: none; }
+    .btn-sm { padding: 6px 10px; font-size: 11.5px; border-radius: 8px; }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-success { background: #059669; color: #fff; }
+    .btn-amber { background: #d97706; color: #fff; }
+    .btn-purple { background: #7c3aed; color: #fff; }
+    .btn-secondary { background: #e2e8f0; color: #1e293b; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .wrap { max-width: 1040px; margin: 12px auto; padding: 0 12px; }
+
+    .shared-hub-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+    @media (max-width: 680px) { .shared-hub-bar { grid-template-columns: 1fr; } }
+    .hub-link { background: #fff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; text-decoration: none; color: #0f172a; font-size: 12.5px; font-weight: 700; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+    .hub-link:hover { border-color: #2563eb; background: #f8fafc; }
+
+    .live-status-bar { background: #fff; border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; border: 1px solid #cbd5e1; display: flex; flex-direction: column; gap: 10px; }
+    .status-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .status-pill { font-size: 12.5px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px; }
+    .gps-pill { font-size: 12px; color: #047857; background: #ecfdf5; padding: 4px 9px; border-radius: 8px; font-weight: 600; }
+
+    .countdown-banner { background: linear-gradient(135deg, #1d4ed8, #4338ca); color: #fff; border-radius: 16px; padding: 16px; margin-bottom: 14px; text-align: center; box-shadow: 0 8px 20px rgba(29,78,216,0.22); display: none; }
+    .countdown-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; opacity: 0.9; font-weight: 700; }
+    .countdown-next-title { font-size: 16px; font-weight: 800; margin: 5px 0 10px; }
+    .countdown-boxes { display: flex; justify-content: center; gap: 8px; }
+    .cd-unit { background: rgba(255,255,255,0.16); border-radius: 10px; padding: 8px 10px; min-width: 62px; }
+    .cd-num { font-size: 22px; font-weight: 800; line-height: 1.1; }
+    .cd-txt { font-size: 10.5px; opacity: 0.85; margin-top: 2px; }
+
+    .layout-grid { display: grid; grid-template-columns: 1.48fr 1fr; gap: 14px; }
+    @media (max-width: 840px) { .layout-grid { grid-template-columns: 1fr; } }
+
+    .card { background: #fff; border-radius: 16px; padding: 15px; margin-bottom: 14px; border: 1px solid #e2e8f0; box-shadow: 0 3px 10px rgba(0,0,0,0.04); }
+    .card-header { font-size: 15px; font-weight: 800; margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; color: #0f172a; flex-wrap: wrap; gap: 6px; }
+
+    .tl-section-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; padding: 5px 10px; border-radius: 8px; margin: 8px 0; }
+    .badge-now { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .badge-up { background: #dbeafe; color: #1d4ed8; }
+    .badge-past { background: #f1f5f9; color: #475569; }
+
+    .act-card { border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-bottom: 11px; background: #fff; }
+    .act-card.now { background: #f0fdf4; border: 2px solid #22c55e; border-left: 6px solid #16a34a; box-shadow: 0 6px 16px rgba(22,163,74,0.12); }
+    .act-card.upcoming { border-left: 5px solid #3b82f6; }
+    .act-card.past { background: #f8fafc; border-left: 5px solid #94a3b8; }
+
+    .act-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .act-time-pill { font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: #eff6ff; color: #1d4ed8; }
+    .act-card.now .act-time-pill { background: #16a34a; color: #fff; }
+    .act-card.past .act-time-pill { background: #e2e8f0; color: #475569; }
+    .act-name { font-size: 15.5px; font-weight: 800; margin: 6px 0 4px; color: #0f172a; }
+    .act-place { font-size: 12.5px; color: #475569; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .act-place a { color: #2563eb; font-weight: 700; text-decoration: none; }
+    .act-tips-box { margin-top: 8px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 8px 10px; border-radius: 8px; font-size: 12.5px; line-height: 1.45; }
+
+    /* Khu vực Note & Ảnh chụp đính kèm */
+    .act-notes-area { margin-top: 10px; padding-top: 9px; border-top: 1px dashed #cbd5e1; }
+    .note-bubble { background: #f1f5f9; border-radius: 10px; padding: 8px 10px; font-size: 12.5px; margin-bottom: 7px; line-height: 1.4; }
+    .note-who { font-weight: 700; color: #0f172a; }
+    .note-when { font-size: 10.5px; color: #64748b; margin-left: 5px; }
+    .note-photo-grid { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .note-photo-item { position: relative; width: 72px; height: 72px; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; background: #fff; }
+    .note-photo-item img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+    .note-photo-dl { position: absolute; bottom: 2px; right: 2px; background: rgba(15,23,42,0.75); color: #fff; font-size: 10px; padding: 2px 5px; border-radius: 4px; text-decoration: none; }
+
+    .pending-photos-strip { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .pending-thumb { width: 52px; height: 52px; border-radius: 6px; object-fit: cover; border: 2px solid #2563eb; }
+
+    .note-form { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
+    .note-form input[type="text"] { flex: 1; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none; }
+    .btn-cam-icon { background: #e0f2fe; color: #0369a1; padding: 7px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+
+    /* KHỐI QUẢN LÝ CHI PHÍ, OCR HOÁ ĐƠN & CHIA TIỀN TỰ ĐỘNG */
+    .expense-total-banner { background: linear-gradient(135deg, #059669, #047857); color: #fff; padding: 12px 14px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .exp-form-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+    .exp-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .exp-input, .exp-select { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; background: #fff; outline: none; }
+    .ocr-status-banner { display: none; padding: 8px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; margin-bottom: 8px; line-height: 1.4; }
+    .ocr-status-banner.loading { display: block; background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
+    .ocr-status-banner.done { display: block; background: #ecfdf5; color: #047857; border: 1px solid #6ee7b7; }
+    .ocr-status-banner.err { display: block; background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+    .exp-item-card { border: 1px solid #e2e8f0; border-left: 4px solid #059669; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: #fff; font-size: 12.5px; }
+    .exp-amount-badge { font-size: 14px; font-weight: 800; color: #047857; background: #ecfdf5; padding: 3px 8px; border-radius: 6px; }
+    .exp-cat-tag { font-size: 11px; font-weight: 700; background: #e0e7ff; color: #1d4ed8; padding: 2px 7px; border-radius: 5px; }
+
+    /* BẢNG CHIA TIỀN TỰ ĐỘNG (SPLIT BILL) */
+    .split-box { background: #faf5ff; border: 1px solid #d8b4fe; border-radius: 12px; padding: 12px; margin-bottom: 12px; display: none; }
+    .split-box.open { display: block; }
+    .member-chips-wrap { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 10px; }
+    .member-chip { background: #fff; border: 1px solid #c084fc; color: #581c87; padding: 4px 9px; border-radius: 99px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+    .member-chip button { border: none; background: none; color: #dc2626; cursor: pointer; font-weight: 800; padding: 0; font-size: 12px; }
+    .settlement-card { background: #fff; border: 1px solid #e9d5ff; border-radius: 10px; padding: 10px; margin-top: 8px; font-size: 12.5px; }
+    .transfer-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 9px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; margin-top: 6px; font-weight: 700; color: #065f46; }
+
+    /* Thời tiết & Bán kính 2km */
+    .weather-hero { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; padding: 14px; border-radius: 12px; margin-bottom: 10px; }
+    .w-temp { font-size: 28px; font-weight: 800; }
+    .w-desc { font-size: 12.5px; opacity: 0.95; }
+    .hourly-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .hour-cell { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 9px; padding: 7px 3px; text-align: center; font-size: 11.5px; }
+    .hour-cell b { display: block; font-size: 13px; margin: 3px 0 2px; color: #0f172a; }
+
+    .poi-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+    .poi-tab { flex: 1; padding: 8px 4px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; text-align: center; }
+    .poi-tab.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .poi-card { display: flex; justify-content: space-between; align-items: center; padding: 9px 11px; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 7px; gap: 8px; }
+    .poi-title { font-size: 13px; font-weight: 700; color: #0f172a; }
+    .poi-sub { font-size: 11.5px; color: #64748b; margin-top: 2px; }
+    .poi-km { font-size: 11px; font-weight: 700; color: #047857; background: #ecfdf5; padding: 3px 6px; border-radius: 6px; white-space: nowrap; }
+
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.76); z-index: 9999; align-items: center; justify-content: center; padding: 12px; }
+    .modal-bg.open { display: flex; }
+    .modal-card { background: #fff; width: 100%; max-width: 600px; border-radius: 18px; padding: 18px; max-height: 92vh; overflow-y: auto; }
+    .lbl { display: block; font-size: 12.5px; font-weight: 700; margin: 11px 0 4px; color: #334155; }
+    .inp { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; }
+    textarea.inp { min-height: 110px; resize: vertical; }
+    .alert-box { margin-top: 10px; padding: 10px 12px; border-radius: 8px; font-size: 12.5px; display: none; line-height: 1.45; }
+    .alert-box.info { display: block; background: #eff6ff; color: #1d4ed8; }
+    .alert-box.success { display: block; background: #ecfdf5; color: #047857; }
+    .alert-box.error { display: block; background: #fef2f2; color: #b91c1c; }
+  </style>
+</head>
+<body>
+
+  <!-- THANH ĐẦU TRANG -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span>🧭 Du Lịch Nhóm</span>
+        <span class="live-dot">LIVE</span>
+      </div>
+      <div class="top-actions">
+        <div class="user-chip" onclick="openOnboardingModal()">
+          👤 <span id="topMemberName">Nhập tên</span> ✎
+        </div>
+        <button class="btn btn-amber btn-sm" onclick="openOnboardingModal()">📤 Lịch trình</button>
+        <button class="btn btn-primary btn-sm" onclick="syncTripFromServer(false)" title="Đồng bộ Note, Ảnh & Chi phí mới nhất">🔄</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- 3 NÚT MỞ NHANH THƯ MỤC ẢNH CHUNG, SHEET CHI PHÍ & SHEET NOTE CHUNG -->
+    <div class="shared-hub-bar">
+      <a id="btnOpenSharedFolder" href="https://drive.google.com" target="_blank" class="hub-link">
+        <span>🖼️ Kho Ảnh & Hoá Đơn (Drive)</span>
+        <span style="color:#2563eb; font-size:11.5px;">Mở Drive ➔</span>
+      </a>
+      <a id="btnOpenExpenseSheet" href="https://docs.google.com/spreadsheets" target="_blank" class="hub-link">
+        <span>💰 Sheet Chi Phí Chung Cả Đoàn</span>
+        <span style="color:#059669; font-size:11.5px;">Xem Sheet ➔</span>
+      </a>
+      <a id="btnOpenSharedSheet" href="https://docs.google.com/spreadsheets" target="_blank" class="hub-link">
+        <span>📝 Sheet Lưu Note Chung</span>
+        <span style="color:#4f46e5; font-size:11.5px;">Xem Sheet ➔</span>
+      </a>
+    </div>
+
+    <!-- THANH KIỂM TRA THỜI GIAN THỰC, ĐỊA ĐIỂM GPS & TUA THỬ GIỜ -->
+    <div class="live-status-bar">
+      <div class="status-row">
+        <div class="status-pill">🕒 <span id="liveClockText">--:--</span></div>
+        <div class="gps-pill" id="liveGpsText">📍 Đang lấy vị trí...</div>
+      </div>
+      <div class="status-row" style="border-top:1px solid #f1f5f9; padding-top:8px;">
+        <span style="font-size:11.5px; font-weight:700; color:#475569;">
+          🎚️ Chế độ xem: <span id="simStatusLabel" style="color:#059669;">Thời gian thực</span>
+        </span>
+        <div style="display:flex; align-items:center; gap:8px; flex:1; max-width:260px;">
+          <input type="range" id="timeSlider" min="0" max="100" value="30" style="flex:1; cursor:pointer;" oninput="handleSliderSimulate(this.value)">
+          <a href="javascript:void(0)" onclick="backToRealTime()" style="font-size:11.5px; color:#2563eb; font-weight:700; text-decoration:none; white-space:nowrap;">Giờ thật</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ĐỒNG HỒ COUNTDOWN KHI HOẠT ĐỘNG TIẾP THEO CHƯA DIỄN RA -->
+    <div id="countdownBanner" class="countdown-banner">
+      <div class="countdown-label">⏳ ĐẾM NGƯỢC TỚI HOẠT ĐỘNG GẦN NHẤT</div>
+      <div class="countdown-next-title" id="countdownTargetTitle">...</div>
+      <div class="countdown-boxes">
+        <div class="cd-unit"><div class="cd-num" id="cdDays">00</div><div class="cd-txt">Ngày</div></div>
+        <div class="cd-unit"><div class="cd-num" id="cdHours">00</div><div class="cd-txt">Giờ</div></div>
+        <div class="cd-unit"><div class="cd-num" id="cdMins">00</div><div class="cd-txt">Phút</div></div>
+        <div class="cd-unit"><div class="cd-num" id="cdSecs">00</div><div class="cd-txt">Giây</div></div>
+      </div>
+    </div>
+
+    <div class="layout-grid">
+      <!-- CỘT TRÁI: DÒNG THỜI GIAN LỊCH TRÌNH -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <span id="tripTitleText">📅 Lịch Trình Theo Dòng Thời Gian</span>
+            <span style="font-size:11.5px; color:#64748b;" id="tripCountText"></span>
+          </div>
+
+          <div class="tl-section-badge badge-now">🟢 Khoảnh khắc hiện tại</div>
+          <div id="currentMomentBox"></div>
+
+          <div class="tl-section-badge badge-up">⏩ 3 – 5 Activities sắp tới</div>
+          <div id="upcomingListBox"></div>
+
+          <div class="tl-section-badge badge-past">⏪ 3 – 5 Activities đã qua (Cùng Note & Ảnh của nhóm)</div>
+          <div id="pastListBox"></div>
+        </div>
+      </div>
+
+      <!-- CỘT PHẢI: CHI PHÍ + OCR HOÁ ĐƠN + CHIA TIỀN (SPLIT BILL), THỜI TIẾT & BÁN KÍNH 2KM -->
+      <div>
+        <!-- KHỐI QUẢN LÝ CHI PHÍ, AI OCR HOÁ ĐƠN & CHIA TIỀN TỰ ĐỘNG -->
+        <div class="card">
+          <div class="card-header">
+            <span>💰 Chi Phí, OCR Hoá Đơn & Chia Tiền</span>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button class="btn btn-purple btn-sm" onclick="toggleSplitBillPanel()">⚖️ Chia tiền (Split Bill)</button>
+              <a id="linkQuickSheetExpense" href="https://docs.google.com/spreadsheets" target="_blank" class="btn btn-secondary btn-sm">📊 Sheet</a>
+            </div>
+          </div>
+
+          <!-- Tổng hợp nhanh tổng tiền -->
+          <div class="expense-total-banner">
+            <span style="font-size:12px; font-weight:700; opacity:0.95;">Tổng chi cả đoàn:</span>
+            <span id="totalExpensesSummaryText" style="font-size:14.5px; font-weight:800;">0 VND</span>
+          </div>
+
+          <!-- BẢNG CHIA TIỀN TỰ ĐỘNG (SPLIT BILL CUỐI CHUYẾN ĐI) -->
+          <div id="splitBillBox" class="split-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:13px; font-weight:800; color:#581c87;">⚖️ Bảng Chia Tiền Tự Động (Split Bill)</span>
+              <button class="btn btn-secondary btn-sm" onclick="copySplitBillSummary()">📋 Copy gửi Zalo</button>
+            </div>
+            <div style="font-size:11.5px; color:#6b21a8; margin-bottom:4px;">
+              Danh sách thành viên tham gia chia đều (<span id="splitMemberCount">0</span> người):
+            </div>
+            <div id="splitMembersChips" class="member-chips-wrap"></div>
+            <div style="display:flex; gap:6px; margin-bottom:8px;">
+              <input type="text" id="newSplitMemberInp" class="exp-input" style="flex:1; padding:6px 9px; font-size:12px;" placeholder="Thêm tên thành viên vào đoàn..." onkeydown="if(event.key==='Enter') addSplitMemberManual()">
+              <button class="btn btn-purple btn-sm" onclick="addSplitMemberManual()">+ Thêm</button>
+            </div>
+            <div id="splitSettlementResult"></div>
+          </div>
+
+          <!-- Form nhập Chi phí + Chụp ảnh Hoá đơn để AI tự đọc số tiền (OCR) -->
+          <div class="exp-form-box">
+            <!-- Nút chụp hoá đơn đặt ngay đầu form để AI tự điền số tiền bên dưới -->
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">
+              <label class="btn-cam-icon" style="flex:1; justify-content:center; padding:9px;" title="Chụp ảnh hoá đơn để AI tự động đọc số tiền, ngoại tệ và món ăn">
+                🧾 Chụp / Chọn ảnh Hoá đơn (✨ AI tự đọc số tiền)
+                <input type="file" id="expReceiptInput" accept="image/*" multiple style="display:none;" onchange="prepareReceiptPhotosAndOcr(this.files)">
+              </label>
+            </div>
+
+            <!-- Thông báo trạng thái AI OCR đọc hoá đơn -->
+            <div id="ocrStatusBanner" class="ocr-status-banner"></div>
+
+            <!-- Hiển thị ảnh hoá đơn đính kèm -->
+            <div id="pendingReceiptStrip" class="pending-photos-strip" style="margin-bottom:8px;"></div>
+
+            <div class="exp-row">
+              <select id="expCategorySelect" class="exp-select" style="flex:1; min-width:140px;">
+                <option value="Ăn uống / Nhà hàng">🍜 Ăn uống / Nhà hàng</option>
+                <option value="Di chuyển / Xăng xe / Taxi">🚕 Di chuyển / Xăng xe / Taxi</option>
+                <option value="Khách sạn / Lưu trú">🏨 Khách sạn / Lưu trú</option>
+                <option value="Vé tham quan / Vui chơi">🎟️ Vé tham quan / Vui chơi</option>
+                <option value="Cafe / Đồ uống / Ăn vặt">☕ Cafe / Đồ uống / Ăn vặt</option>
+                <option value="Mua sắm / Đồ dùng chung">🛍️ Mua sắm / Đồ dùng chung</option>
+                <option value="Chi phí phát sinh khác">📦 Chi phí phát sinh khác</option>
+              </select>
+            </div>
+
+            <div class="exp-row">
+              <input type="number" id="expAmountInput" class="exp-input" style="flex:1.4; min-width:120px; font-weight:700;" placeholder="Số tiền (AI tự điền hoặc nhập)" step="any">
+              <select id="expCurrencySelect" class="exp-select" style="flex:0.8; min-width:85px; font-weight:700;">
+                <option value="VND">VND (₫)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="JPY">JPY (¥)</option>
+                <option value="KRW">KRW (₩)</option>
+                <option value="CNY">CNY (¥)</option>
+                <option value="THB">THB (฿)</option>
+                <option value="AUD">AUD ($)</option>
+              </select>
+            </div>
+
+            <div class="exp-row">
+              <input type="text" id="expNoteInput" class="exp-input" style="width:100%;" placeholder="Note chi tiết khoản chi (AI tự tóm tắt từ hoá đơn hoặc tự gõ)..." onkeydown="if(event.key==='Enter') submitGroupExpense()">
+            </div>
+
+            <button class="btn btn-success" id="btnSubmitExpense" onclick="submitGroupExpense()" style="width:100%; padding:10px;">
+              💾 Lưu Chi Phí & Hoá Đơn Lên Sheet Đoàn
+            </button>
+          </div>
+
+          <div style="font-size:12px; font-weight:700; color:#475569; margin-bottom:6px;">
+            Lịch sử chi phí đã ghi nhận (<span id="expenseCountLabel">0</span> khoản):
+          </div>
+          <div id="expenseListContainer" style="max-height:260px; overflow-y:auto;"></div>
+        </div>
+
+        <!-- THỜI TIẾT HIỆN TẠI & 3-5 TIẾNG TIẾP THEO -->
+        <div class="card">
+          <div class="card-header">
+            <span>🌤️ Thời Tiết Hiện Tại & 3–5h Tới</span>
+            <span style="font-size:11px; color:#64748b;" id="weatherPlaceLabel"></span>
+          </div>
+          <div class="weather-hero">
+            <div>
+              <div class="w-temp" id="wNowTemp">--°C</div>
+              <div class="w-desc" id="wNowDesc">Đang kiểm tra thời tiết...</div>
+            </div>
+            <div style="text-align:right; font-size:12px; line-height:1.5;">
+              <div id="wNowWind">💨 Gió: -- km/h</div>
+              <div id="wNowHum">💧 Ẩm: --%</div>
+            </div>
+          </div>
+          <div style="font-size:11.5px; font-weight:700; color:#475569; margin-bottom:6px;">Dự báo 5 tiếng tiếp theo:</div>
+          <div id="hourlyWeatherBox" class="hourly-grid"></div>
+        </div>
+
+        <!-- ĐỊA ĐIỂM BÁN KÍNH 2KM -->
+        <div class="card">
+          <div class="card-header">
+            <span>📍 Quanh Đây (Bán kính ≤ 2km)</span>
+            <span style="font-size:11px; color:#059669; font-weight:700;" id="poiCenterLabel"></span>
+          </div>
+          <div class="poi-tabs">
+            <button class="poi-tab active" onclick="switchPoiTab('food', this)">🍜 Quán ăn</button>
+            <button class="poi-tab" onclick="switchPoiTab('cafe', this)">☕ Cafe</button>
+            <button class="poi-tab" onclick="switchPoiTab('sight', this)">📸 Du lịch</button>
+          </div>
+          <div id="poiItemsBox"></div>
+        </div>
+
+        <!-- BẢNG NOTE & ẢNH CHUNG CỦA NHÓM -->
+        <div class="card">
+          <div class="card-header">
+            <span>📌 Note & Ảnh Chung Của Nhóm</span>
+            <button class="btn btn-secondary btn-sm" onclick="syncTripFromServer(false)">🔄 Đồng bộ</button>
+          </div>
+          <div id="generalNotesBox" style="max-height:240px; overflow-y:auto; margin-bottom:8px;"></div>
+          <div id="pendingPhotos_GENERAL" class="pending-photos-strip"></div>
+          <div class="note-form">
+            <label class="btn-cam-icon" title="Chụp hoặc chọn ảnh tải lên thư mục chung">
+              📷 Ảnh
+              <input type="file" accept="image/*" multiple style="display:none;" onchange="preparePhotosForNote('GENERAL', this.files)">
+            </label>
+            <input type="text" id="inpNote_GENERAL" placeholder="Viết note chung hoặc gửi ảnh..." onkeydown="if(event.key==='Enter') submitNoteWithPhotos('GENERAL')">
+            <button class="btn btn-primary btn-sm" id="btnSend_GENERAL" onclick="submitNoteWithPhotos('GENERAL')">Gửi</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL NHẬP TÊN & UPLOAD LỊCH TRÌNH -->
+  <div id="onboardingModal" class="modal-bg">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; font-size:17px;">🎒 Nhập Tên & Upload Lịch Trình Nhóm</h3>
+        <button class="btn btn-secondary btn-sm" onclick="closeOnboardingModal()">✕ Đóng</button>
+      </div>
+
+      <label class="lbl">1. Tên của bạn trong nhóm (bắt buộc để ghi Note, tải ảnh & chia tiền):</label>
+      <input type="text" id="inpMemberName" class="inp" placeholder="Ví dụ: Minh, Lan, Hùng...">
+
+      <label class="lbl">2. Đường link Google Apps Script (/exec) của nhóm:</label>
+      <input type="text" id="inpGasUrl" class="inp" placeholder="Dán link Web App (/exec) từ Bước 1...">
+
+      <div style="margin-top:12px; padding-top:10px; border-top:1px solid #e2e8f0;">
+        <label class="lbl" style="margin-top:0;">3. Upload Lịch trình để AI phân tích (Ưu tiên lịch trình gốc + Tự sinh bổ sung nếu thiếu):</label>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+          <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+            📎 Chọn file (.PDF, .DOCX, .TXT, .MD, Ảnh)
+            <input type="file" id="inpItineraryFile" accept=".pdf,.docx,.txt,.md,image/*" style="display:none;" onchange="handleUploadItineraryFile(this.files[0])">
+          </label>
+          <button class="btn btn-secondary btn-sm" onclick="resetDemoTrip()">✨ Nạp lịch trình mẫu</button>
+        </div>
+        <textarea id="inpRawItinerary" class="inp" placeholder="Hoặc dán trực tiếp văn bản lịch trình của nhóm vào đây..."></textarea>
+      </div>
+
+      <div id="modalAlert" class="alert-box"></div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px; flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="saveMemberAndEnter()">Vào xem lịch trình hiện có</button>
+        <button class="btn btn-success" id="btnRunAiAnalyze" onclick="submitItineraryToAi()">🚀 AI Phân Tích & Cập Nhật Cho Nhóm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cầu nối Iframe dự phòng -->
+  <iframe name="gas_sync_iframe" id="gasSyncIframe" style="display:none;"></iframe>
+  <form id="gasSyncForm" method="POST" target="gas_sync_iframe" accept-charset="UTF-8" style="display:none;">
+    <input type="hidden" name="payload" id="gasSyncPayload">
+  </form>
+
+<script>
+  // =========================================================================
+  // DÁN LINK GOOGLE APPS SCRIPT (/exec) CỦA BẠN VÀO ĐÂY TRƯỚC KHI ĐƯA LÊN GITHUB
+  // =========================================================================
+  const DEFAULT_GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyGMhZ3avWDIzkwyK9FgUDl6WX-ePGJXpc9UHVNfpvVLIdtjI_bvf84SBSVNnxcv_UxBA/exec';
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  let memberName = '';
+  let gasWebAppUrl = DEFAULT_GAS_WEBAPP_URL;
+  let userCoords = null;
+  let isSimulatingTime = false;
+  let simulatedTimeMs = Date.now();
+  let currentPoiTab = 'food';
+  let uploadedFilePayload = null;
+  let lastSplitSummaryPlainText = '';
+
+  const pendingPhotosByAct = {};
+  let pendingReceiptPhotos = [];
+
+  let tripData = {
+    tripTitle: 'Chuyến Đi Nhóm',
+    sharedFolderUrl: '',
+    sharedSheetUrl: '',
+    expenseSheetUrl: '',
+    members: [],
+    activities: [],
+    generalNotes: [],
+    expenses: []
+  };
+
+  let osmNearbyCache = { food: [], cafe: [], sight: [] };
+  const iframeCallbacks = {};
+
+  window.addEventListener('DOMContentLoaded', () => {
+    loadLocalSettings();
+
+    window.addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.requestId && iframeCallbacks[d.requestId]) {
+        clearTimeout(iframeCallbacks[d.requestId].timer);
+        const resolve = iframeCallbacks[d.requestId].resolve;
+        delete iframeCallbacks[d.requestId];
+        resolve(d);
+      }
+    });
+
+    if (!tripData.activities || tripData.activities.length === 0) {
+      createDefaultSampleTrip();
+    }
+
+    if (!memberName) {
+      openOnboardingModal();
+    }
+
+    initGeolocationAndWeather();
+
+    setInterval(() => updateEverySecondTick(), 1000);
+    setInterval(() => {
+      if (!isSimulatingTime) renderAllTimelineSections();
+    }, 30000);
+
+    syncTripFromServer(true);
+  });
+
+  function loadLocalSettings() {
+    try {
+      memberName = localStorage.getItem('gt_member_name') || '';
+      if (memberName) {
+        document.getElementById('topMemberName').textContent = memberName;
+        document.getElementById('inpMemberName').value = memberName;
+      }
+      const savedUrl = localStorage.getItem('gt_gas_url') || DEFAULT_GAS_WEBAPP_URL;
+      if (savedUrl) {
+        gasWebAppUrl = savedUrl;
+        document.getElementById('inpGasUrl').value = savedUrl;
+      }
+      const savedTrip = localStorage.getItem('gt_trip_data_v5');
+      if (savedTrip) {
+        tripData = JSON.parse(savedTrip);
+        if (!tripData.expenses) tripData.expenses = [];
+        if (!tripData.members) tripData.members = [];
+        updateSharedLinksUI();
+      }
+    } catch (e) {}
+  }
+
+  function saveLocalTrip() {
+    try {
+      localStorage.setItem('gt_trip_data_v5', JSON.stringify(tripData));
+      updateSharedLinksUI();
+    } catch (e) {}
+  }
+
+  function updateSharedLinksUI() {
+    if (tripData.sharedFolderUrl) {
+      document.getElementById('btnOpenSharedFolder').href = tripData.sharedFolderUrl;
+    }
+    if (tripData.sharedSheetUrl) {
+      document.getElementById('btnOpenSharedSheet').href = tripData.sharedSheetUrl;
+    }
+    const expUrl = tripData.expenseSheetUrl || tripData.sharedSheetUrl;
+    if (expUrl) {
+      document.getElementById('btnOpenExpenseSheet').href = expUrl;
+      document.getElementById('linkQuickSheetExpense').href = expUrl;
+    }
+  }
+
+  async function callGasBackend(payloadObj) {
+    const url = (document.getElementById('inpGasUrl').value.trim() || gasWebAppUrl).trim();
+    if (!url) throw new Error('Chưa cấu hình đường link Google Apps Script (/exec).');
+
+    if (window.location.protocol !== 'file:') {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payloadObj)
+        });
+        if (res.ok) return await res.json();
+      } catch (e) {}
+    }
+
+    return new Promise((resolve, reject) => {
+      const reqId = 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      payloadObj.requestId = reqId;
+      payloadObj.useIframe = true;
+      const timer = setTimeout(() => {
+        delete iframeCallbacks[reqId];
+        reject(new Error('Quá thời gian kết nối Apps Script. Hãy kiểm tra link /exec.'));
+      }, 60000);
+      iframeCallbacks[reqId] = { resolve, timer };
+
+      const form = document.getElementById('gasSyncForm');
+      const inp = document.getElementById('gasSyncPayload');
+      form.action = url;
+      inp.value = JSON.stringify(payloadObj);
+      form.submit();
+    });
+  }
+
+  async function syncTripFromServer(silent = true) {
+    const url = (document.getElementById('inpGasUrl').value.trim() || gasWebAppUrl).trim();
+    if (!url) return;
+    try {
+      const res = await callGasBackend({ action: 'getTripData' });
+      if (res && res.success) {
+        if (res.tripData && Array.isArray(res.tripData.activities) && res.tripData.activities.length > 0) {
+          tripData = res.tripData;
+        }
+        if (res.sharedFolderUrl) tripData.sharedFolderUrl = res.sharedFolderUrl;
+        if (res.sharedSheetUrl) tripData.sharedSheetUrl = res.sharedSheetUrl;
+        if (res.expenseSheetUrl) tripData.expenseSheetUrl = res.expenseSheetUrl;
+        if (!tripData.expenses) tripData.expenses = [];
+        if (!tripData.members) tripData.members = [];
+        saveLocalTrip();
+        renderAllTimelineSections();
+        refreshWeatherAndNearbyForActiveAct();
+      }
+    } catch (e) {
+      if (!silent) alert('Không thể đồng bộ từ máy chủ: ' + e.message);
+    }
+  }
+
+  // ==================== TÍNH NĂNG 1: AI TỰ ĐỘNG ĐỌC HOÁ ĐƠN (OCR RECEIPT) ====================
+  async function prepareReceiptPhotosAndOcr(fileList) {
+    if (!fileList || fileList.length === 0) return;
+    const strip = document.getElementById('pendingReceiptStrip');
+    strip.innerHTML = `<span style="font-size:11.5px;color:#059669;">⏳ Đang nén ${fileList.length} ảnh hoá đơn...</span>`;
+
+    for (let i = 0; i < fileList.length; i++) {
+      const compressed = await compressPhotoFile(fileList[i], 1500, 0.82);
+      pendingReceiptPhotos.push(compressed);
+    }
+    document.getElementById('expReceiptInput').value = '';
+    renderPendingReceiptsUI();
+
+    // Tự động gọi AI OCR đọc ảnh hoá đơn đầu tiên vừa chụp
+    const url = (document.getElementById('inpGasUrl').value.trim() || gasWebAppUrl).trim();
+    const banner = document.getElementById('ocrStatusBanner');
+    if (!url || pendingReceiptPhotos.length === 0) return;
+
+    banner.className = 'ocr-status-banner loading';
+    banner.innerHTML = '✨ <b>AI đang đọc hoá đơn (OCR)...</b> Tự động trích xuất số tiền, ngoại tệ & món ăn...';
+
+    try {
+      const res = await callGasBackend({
+        action: 'ocrReceipt',
+        imageBase64: pendingReceiptPhotos[pendingReceiptPhotos.length - 1].base64
+      });
+
+      if (res && res.success && res.ocr) {
+        const ocr = res.ocr;
+        if (ocr.amount && Number(ocr.amount) > 0) {
+          document.getElementById('expAmountInput').value = Number(ocr.amount);
+        }
+        if (ocr.currency) {
+          const curSel = document.getElementById('expCurrencySelect');
+          if (Array.from(curSel.options).some(o => o.value === ocr.currency)) {
+            curSel.value = ocr.currency;
+          }
+        }
+        if (ocr.category) {
+          const catSel = document.getElementById('expCategorySelect');
+          if (Array.from(catSel.options).some(o => o.value === ocr.category)) {
+            catSel.value = ocr.category;
+          }
+        }
+        if (ocr.note) {
+          document.getElementById('expNoteInput').value = ocr.note;
+        }
+        banner.className = 'ocr-status-banner done';
+        banner.innerHTML = `✅ <b>AI đã đọc xong hoá đơn:</b> ${Number(ocr.amount || 0).toLocaleString('vi-VN')} ${escapeHtml(ocr.currency || 'VND')} — <i>${escapeHtml(ocr.note || '')}</i>. Hãy kiểm tra và bấm <b>Lưu</b>!`;
+      } else {
+        throw new Error(res && res.error ? res.error : 'Không đọc được chữ trên hoá đơn');
+      }
+    } catch (err) {
+      banner.className = 'ocr-status-banner err';
+      banner.innerHTML = `⚠️ Chưa tự đọc được số tiền (${escapeHtml(err.message)}). Bạn có thể gõ số tiền thủ công ở dưới nhé.`;
+    }
+  }
+
+  function renderPendingReceiptsUI() {
+    const strip = document.getElementById('pendingReceiptStrip');
+    if (pendingReceiptPhotos.length === 0) {
+      strip.innerHTML = '';
+      return;
+    }
+    strip.innerHTML = pendingReceiptPhotos.map((p, idx) => `
+      <div style="position:relative;">
+        <img src="${p.base64}" class="pending-thumb" style="border-color:#059669;">
+        <button onclick="removePendingReceipt(${idx})" style="position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function removePendingReceipt(idx) {
+    pendingReceiptPhotos.splice(idx, 1);
+    renderPendingReceiptsUI();
+    if (pendingReceiptPhotos.length === 0) {
+      document.getElementById('ocrStatusBanner').style.display = 'none';
+    }
+  }
+
+  async function submitGroupExpense() {
+    if (!memberName) {
+      openOnboardingModal();
+      showModalAlert('⚠️ Vui lòng nhập Tên của bạn trước khi kê khai chi phí chung nhé!', 'error');
+      return;
+    }
+
+    const category = document.getElementById('expCategorySelect').value;
+    const amountRaw = document.getElementById('expAmountInput').value;
+    const currency = document.getElementById('expCurrencySelect').value;
+    const note = document.getElementById('expNoteInput').value.trim();
+
+    const amount = parseFloat(amountRaw);
+    if (isNaN(amount) || amount <= 0) {
+      alert('Vui lòng nhập số tiền hợp lệ lớn hơn 0!');
+      document.getElementById('expAmountInput').focus();
+      return;
+    }
+
+    const btn = document.getElementById('btnSubmitExpense');
+    btn.disabled = true;
+    btn.textContent = pendingReceiptPhotos.length > 0 ? '⏳ Đang lưu Hoá đơn lên Drive...' : '⏳ Đang lưu...';
+
+    const receiptsToSend = [...pendingReceiptPhotos];
+    const localExpense = {
+      id: 'exp_' + Date.now(),
+      time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      payer: memberName,
+      category: category,
+      note: note,
+      amount: amount,
+      currency: currency,
+      receipts: receiptsToSend.map(r => ({ thumbUrl: r.base64, viewUrl: r.base64, downloadUrl: r.base64 }))
+    };
+
+    if (!tripData.expenses) tripData.expenses = [];
+    tripData.expenses.unshift(localExpense);
+    ensureMemberInLocalList(memberName);
+
+    document.getElementById('expAmountInput').value = '';
+    document.getElementById('expNoteInput').value = '';
+    document.getElementById('ocrStatusBanner').style.display = 'none';
+    pendingReceiptPhotos = [];
+    renderPendingReceiptsUI();
+    saveLocalTrip();
+    renderExpensesSection();
+
+    const url = (document.getElementById('inpGasUrl').value.trim() || gasWebAppUrl).trim();
+    if (url) {
+      try {
+        const res = await callGasBackend({
+          action: 'addExpense',
+          payer: memberName,
+          category: category,
+          note: note,
+          amount: amount,
+          currency: currency,
+          receiptPhotos: receiptsToSend,
+          fallbackTripData: tripData
+        });
+        if (res && res.success && res.tripData) {
+          tripData = res.tripData;
+          saveLocalTrip();
+          renderExpensesSection();
+        }
+      } catch (e) {
+        alert('Lỗi đồng bộ chi phí lên Google Sheet: ' + e.message);
+      }
+    }
+
+    btn.disabled = false;
+    btn.textContent = '💾 Lưu Chi Phí & Hoá Đơn Lên Sheet Đoàn';
+  }
+
+  // ==================== TÍNH NĂNG 2: BẢNG CHIA TIỀN TỰ ĐỘNG (SPLIT BILL CUỐI CHUYẾN) ====================
+  function toggleSplitBillPanel() {
+    const box = document.getElementById('splitBillBox');
+    box.classList.toggle('open');
+    if (box.classList.contains('open')) {
+      renderSplitBillCalculation();
+    }
+  }
+
+  function ensureMemberInLocalList(name) {
+    if (!name) return;
+    const clean = name.trim();
+    if (!clean) return;
+    if (!Array.isArray(tripData.members)) tripData.members = [];
+    if (!tripData.members.some(m => m.toLowerCase() === clean.toLowerCase())) {
+      tripData.members.push(clean);
+    }
+  }
+
+  // Tập hợp danh sách tất cả thành viên trong đoàn (từ danh sách members + người trả tiền + người ghi note)
+  function getAllGroupMembers() {
+    const map = new Map();
+    const add = (n) => {
+      if (!n) return;
+      const c = n.trim().replace(/\s*\(Trưởng nhóm\)/i, '');
+      if (!c || c === 'AI Trợ lý' || c === 'Khách') return;
+      const key = c.toLowerCase();
+      if (!map.has(key)) map.set(key, c);
+    };
+
+    (tripData.members || []).forEach(add);
+    (tripData.expenses || []).forEach(e => add(e.payer));
+    (tripData.activities || []).forEach(a => (a.notes || []).forEach(n => add(n.author)));
+    if (memberName) add(memberName);
+
+    const result = Array.from(map.values());
+    tripData.members = result;
+    return result;
+  }
+
+  async function addSplitMemberManual() {
+    const inp = document.getElementById('newSplitMemberInp');
+    const name = inp.value.trim();
+    if (!name) return;
+    ensureMemberInLocalList(name);
+    inp.value = '';
+    saveLocalTrip();
+    renderSplitBillCalculation();
+
+    const url = (document.getElementById('inpGasUrl').value.trim() || gasWebAppUrl).trim();
+    if (url) {
+      try {
+        await callGasBackend({ action: 'updateMembers', members: tripData.members, fallbackTripData: tripData });
+      } catch (e) {}
+    }
+  }
+
+  async function removeSplitMember(idx) {
+    if (!Array.isArray(tripData.members)) return;
+    tripData.members.splice(idx, 1);
+    saveLocalTrip();
+    renderSplitBillCalculation();
+
+    const url = (document.getElementById('inpGasUrl').value.trim() || gasWebAppUrl).trim();
+    if (url) {
+      try {
+        await callGasBackend({ action: 'updateMembers', members: tripData.members, fallbackTripData: tripData });
+      } catch (e) {}
+    }
+  }
+
+  // Thuật toán tối ưu công nợ (Minimum Cash Flow Split Bill) theo từng đơn vị tiền tệ
+  function renderSplitBillCalculation() {
+    const members = getAllGroupMembers();
+    document.getElementById('splitMemberCount').textContent = members.length;
+
+    const chipsEl = document.getElementById('splitMembersChips');
+    chipsEl.innerHTML = members.map((m, idx) => `
+      <span class="member-chip">
+        👤 ${escapeHtml(m)}
+        <button onclick="removeSplitMember(${idx})" title="Bỏ thành viên này khỏi danh sách chia tiền">✕</button>
+      </span>
+    `).join('');
+
+    const resultEl = document.getElementById('splitSettlementResult');
+    const expenses = tripData.expenses || [];
+
+    if (members.length === 0 || expenses.length === 0) {
+      resultEl.innerHTML = `<div style="font-size:12px;color:#6b21a8;">Hãy thêm ít nhất 2 thành viên và 1 khoản chi phí để hệ thống tự chia tiền.</div>`;
+      lastSplitSummaryPlainText = '';
+      return;
+    }
+
+    // Gom nhóm chi phí theo từng loại tiền tệ (VND, USD, EUR...)
+    const byCurrency = {};
+    expenses.forEach(exp => {
+      const cur = exp.currency || 'VND';
+      if (!byCurrency[cur]) byCurrency[cur] = [];
+      byCurrency[cur].push(exp);
+    });
+
+    let htmlOut = '';
+    let textReportLines = [`📊 QUYẾT TOÁN CHI PHÍ: ${tripData.tripTitle} (${members.length} thành viên: ${members.join(', ')})`];
+
+    Object.keys(byCurrency).forEach(cur => {
+      const curList = byCurrency[cur];
+      const paidByMember = {};
+      members.forEach(m => { paidByMember[m] = 0; });
+
+      let totalCur = 0;
+      curList.forEach(e => {
+        const amt = Number(e.amount) || 0;
+        totalCur += amt;
+        const matchedMember = members.find(m => m.toLowerCase() === (e.payer || '').trim().toLowerCase());
+        if (matchedMember) {
+          paidByMember[matchedMember] += amt;
+        } else if (e.payer) {
+          paidByMember[e.payer] = (paidByMember[e.payer] || 0) + amt;
+        }
+      });
+
+      const allParticipants = Object.keys(paidByMember);
+      const count = allParticipants.length;
+      const sharePerPerson = totalCur / count;
+
+      // Tính số dư từng người: Dương (+) là đã chi dư cần thu về, Âm (-) là cần chuyển trả thêm
+      const debtors = [];
+      const creditors = [];
+      allParticipants.forEach(person => {
+        const net = paidByMember[person] - sharePerPerson;
+        if (net < -0.5) debtors.push({ person, amount: -net });
+        else if (net > 0.5) creditors.push({ person, amount: net });
+      });
+
+      debtors.sort((a, b) => b.amount - a.amount);
+      creditors.sort((a, b) => b.amount - a.amount);
+
+      const transfers = [];
+      let i = 0, j = 0;
+      while (i < debtors.length && j < creditors.length) {
+        const sendAmt = Math.min(debtors[i].amount, creditors[j].amount);
+        if (sendAmt > 0.5) {
+          const rounded = cur === 'VND' ? Math.round(sendAmt / 1000) * 1000 || Math.round(sendAmt) : Number(sendAmt.toFixed(2));
+          transfers.push({
+            from: debtors[i].person,
+            to: creditors[j].person,
+            amount: rounded
+          });
+        }
+        debtors[i].amount -= sendAmt;
+        creditors[j].amount -= sendAmt;
+        if (debtors[i].amount <= 0.5) i++;
+        if (creditors[j].amount <= 0.5) j++;
+      }
+
+      const fmt = (n) => (cur === 'VND' ? Math.round(n).toLocaleString('vi-VN') : Number(n.toFixed(2)).toLocaleString('vi-VN')) + ' ' + cur;
+
+      textReportLines.push(`\n💰 [${cur}] Tổng cộng: ${fmt(totalCur)} | Bình quân: ${fmt(sharePerPerson)}/người`);
+      allParticipants.forEach(p => {
+        textReportLines.push(`  • ${p} đã chi: ${fmt(paidByMember[p])}`);
+      });
+
+      const paidDetailHtml = allParticipants.map(p =>
+        `<span style="display:inline-block;margin-right:10px;font-size:11.5px;color:#334155;">• <b>${escapeHtml(p)}</b> đã trả: ${fmt(paidByMember[p])}</span>`
+      ).join('');
+
+      const transfersHtml = transfers.length > 0
+        ? transfers.map(t => {
+            textReportLines.push(`  👉 ${t.from} chuyển cho ${t.to}: ${fmt(t.amount)}`);
+            return `
+              <div class="transfer-row">
+                <span>💸 <b>${escapeHtml(t.from)}</b> chuyển cho <b>${escapeHtml(t.to)}</b></span>
+                <span>${fmt(t.amount)}</span>
+              </div>
+            `;
+          }).join('')
+        : `<div style="margin-top:6px;color:#059669;font-weight:700;">✅ Mọi người đã chi đều nhau!</div>`;
+
+      htmlOut += `
+        <div class="settlement-card">
+          <div style="display:flex;justify-content:space-between;font-weight:800;color:#1e293b;margin-bottom:4px;">
+            <span>Đơn vị: ${escapeHtml(cur)}</span>
+            <span>Bình quân: ${fmt(sharePerPerson)} / người</span>
+          </div>
+          <div style="margin-bottom:6px;line-height:1.5;">${paidDetailHtml}</div>
+          <div style="font-size:11.5px;font-weight:700;color:#475569;">Lệnh chuyển khoản tối ưu:</div>
+          ${transfersHtml}
+        </div>
+      `;
+    });
+
+    resultEl.innerHTML = htmlOut;
+    lastSplitSummaryPlainText = textReportLines.join('\n');
+  }
+
+  function copySplitBillSummary() {
+    renderSplitBillCalculation();
+    if (!lastSplitSummaryPlainText) return;
+    navigator.clipboard.writeText(lastSplitSummaryPlainText).then(() => {
+      alert('✅ Đã copy bảng chia tiền! Bạn có thể dán thẳng vào nhóm Zalo của đoàn.');
+    }).catch(() => {
+      alert(lastSplitSummaryPlainText);
+    });
+  }
+
+  function renderExpensesSection() {
+    const list = tripData.expenses || [];
+    document.getElementById('expenseCountLabel').textContent = list.length;
+
+    const totalsByCur = {};
+    list.forEach(item => {
+      const cur = item.currency || 'VND';
+      totalsByCur[cur] = (totalsByCur[cur] || 0) + (Number(item.amount) || 0);
+    });
+
+    const summaryParts = Object.keys(totalsByCur).map(cur => {
+      return `${totalsByCur[cur].toLocaleString('vi-VN')} ${cur}`;
+    });
+    document.getElementById('totalExpensesSummaryText').textContent =
+      summaryParts.length > 0 ? summaryParts.join(' + ') : '0 VND';
+
+    if (document.getElementById('splitBillBox').classList.contains('open')) {
+      renderSplitBillCalculation();
+    }
+
+    const container = document.getElementById('expenseListContainer');
+    if (list.length === 0) {
+      container.innerHTML = `<div style="font-size:12px; color:#94a3b8; padding:8px 0;">Chưa có khoản chi phí nào được ghi nhận.</div>`;
+      return;
+    }
+
+    container.innerHTML = list.map(exp => {
+      const receipts = exp.receipts || [];
+      const receiptHtml = receipts.length > 0
+        ? `<div class="note-photo-grid">` +
+          receipts.map(r => `
+            <div class="note-photo-item">
+              <a href="${r.viewUrl || r.thumbUrl}" target="_blank" title="Xem ảnh Hoá đơn trên Drive">
+                <img src="${r.thumbUrl}">
+              </a>
+              <a href="${r.downloadUrl || r.viewUrl}" target="_blank" class="note-photo-dl">🧾 Hoá đơn</a>
+            </div>
+          `).join('') +
+          `</div>`
+        : '';
+
+      return `
+        <div class="exp-item-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:4px;">
+            <span class="exp-cat-tag">${escapeHtml(exp.category)}</span>
+            <span class="exp-amount-badge">${Number(exp.amount).toLocaleString('vi-VN')} ${escapeHtml(exp.currency || 'VND')}</span>
+          </div>
+          <div style="color:#0f172a; font-weight:600; margin-bottom:3px;">
+            ${escapeHtml(exp.note || exp.category)}
+          </div>
+          <div style="font-size:11px; color:#64748b;">
+            👤 Người chi: <b>${escapeHtml(exp.payer)}</b> • 🕒 ${escapeHtml(exp.time || '')}
+          </div>
+          ${receiptHtml}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ==================== NÉN ẢNH TRÊN ĐIỆN THOẠI & GỬI KÈM NOTE LÊN DRIVE CHUNG ====================
+  function compressPhotoFile(file, maxWidth = 1600, quality = 0.82) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width;
+          let h = img.height;
+          if (w > maxWidth) {
+            h = Math.round((h * maxWidth) / w);
+            w = maxWidth;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve({ base64: canvas.toDataURL('image/jpeg', quality) });
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function preparePhotosForNote(activityId, fileList) {
+    if (!fileList || fileList.length === 0) return;
+    if (!pendingPhotosByAct[activityId]) pendingPhotosByAct[activityId] = [];
+
+    const stripEl = document.getElementById(`pendingPhotos_${activityId}`);
+    if (stripEl) stripEl.innerHTML = `<span style="font-size:11.5px;color:#2563eb;">⏳ Đang chuẩn bị ${fileList.length} ảnh...</span>`;
+
+    for (let i = 0; i < fileList.length; i++) {
+      const compressed = await compressPhotoFile(fileList[i]);
+      pendingPhotosByAct[activityId].push(compressed);
+    }
+
+    renderPendingPhotosStrip(activityId);
+  }
+
+  function renderPendingPhotosStrip(activityId) {
+    const stripEl = document.getElementById(`pendingPhotos_${activityId}`);
+    if (!stripEl) return;
+    const list = pendingPhotosByAct[activityId] || [];
+    if (list.length === 0) {
+      stripEl.innerHTML = '';
+      return;
+    }
+    stripEl.innerHTML = list.map((p, idx) => `
+      <div style="position:relative;">
+        <img src="${p.base64}" class="pending-thumb">
+        <button onclick="removePendingPhoto('${activityId}', ${idx})" style="position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function removePendingPhoto(activityId, idx) {
+    if (!pendingPhotosByAct[activityId]) return;
+    pendingPhotosByAct[activityId].splice(idx, 1);
+    renderPendingPhotosStrip(activityId);
+  }
+
+  async function submitNoteWithPhotos(activityId) {
+    if (!memberName) {
+      openOnboardingModal();
+      showModalAlert('⚠️ Vui lòng nhập Tên của bạn trước khi gửi Note hoặc tải ảnh lên kho chung nhé!', 'error');
+      return;
+    }
+
+    const inp = document.getElementById(`inpNote_${activityId}`);
+    const text = inp ? inp.value.trim() : '';
+    const photosToUpload = pendingPhotosByAct[activityId] || [];
+
+    if (!text && photosToUpload.length === 0) return;
+
+    const btn = document.getElementById(`btnSend_${activityId}`);
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = photosToUpload.length > 0 ? '⏳ Đang tải ảnh...' : '⏳...';
+    }
+
+    const localEntry = {
+      author: memberName,
+      time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      text: text,
+      photos: photosToUpload.map(p => ({ thumbUrl: p.base64, viewUrl: p.base64, downloadUrl: p.base64 }))
+    };
+
+    if (activityId === 'GENERAL') {
+      if (!tripData.generalNotes) tripData.generalNotes = [];
+      tripData.generalNotes.push(localEntry);
+    } else {
+      const act = (tripData.activities || []).find(a => a.id === activityId);
+      if (act) {
+        if (!act.notes) act.notes = [];
+        act.notes.push(localEntry);
+      }
+    }
+
+    ensureMemberInLocalList(memberName);
+    if (inp) inp.value = '';
+    pendingPhotosByAct[activityId] = [];
+    saveLocalTrip();
+    renderAllTimelineSections();
+
+    const url = (document.getElementById('inpGasUrl').value.trim() || gasWebAppUrl).trim();
+    if (url) {
+      try {
+        const res = await callGasBackend({
+          action: 'addNoteAndPhotos',
+          activityId: activityId,
+          author: memberName,
+          text: text,
+          photos: photosToUpload,
+          fallbackTripData: tripData
+        });
+        if (res && res.success && res.tripData) {
+          tripData = res.tripData;
+          saveLocalTrip();
+          renderAllTimelineSections();
+        }
+      } catch (e) {
+        alert('Lưu lên Drive gặp lỗi: ' + e.message);
+      }
+    }
+
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Gửi';
+    }
+  }
+
+  // ==================== ĐỊNH VỊ THỜI GIAN THỰC & ĐỒNG HỒ COUNTDOWN ====================
+  function getNowDate() {
+    return isSimulatingTime ? new Date(simulatedTimeMs) : new Date();
+  }
+
+  function handleSliderSimulate(val) {
+    if (!tripData.activities || tripData.activities.length === 0) return;
+    isSimulatingTime = true;
+    const sorted = [...tripData.activities].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+    const minMs = new Date(sorted[0].startTime).getTime() - 3 * 3600 * 1000;
+    const maxMs = new Date(sorted[sorted.length - 1].endTime || sorted[sorted.length - 1].startTime).getTime() + 2 * 3600 * 1000;
+    simulatedTimeMs = minMs + ((maxMs - minMs) * (Number(val) / 100));
+
+    document.getElementById('simStatusLabel').textContent = 'Đang tua thử giờ';
+    document.getElementById('simStatusLabel').style.color = '#d97706';
+    renderAllTimelineSections();
+    refreshWeatherAndNearbyForActiveAct();
+  }
+
+  function backToRealTime() {
+    isSimulatingTime = false;
+    document.getElementById('simStatusLabel').textContent = 'Thời gian thực';
+    document.getElementById('simStatusLabel').style.color = '#059669';
+    renderAllTimelineSections();
+    refreshWeatherAndNearbyForActiveAct();
+  }
+
+  function partitionTimeline(now) {
+    const sorted = [...(tripData.activities || [])].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+    const past = [];
+    let ongoing = null;
+    const upcoming = [];
+
+    for (const act of sorted) {
+      const start = new Date(act.startTime);
+      const end = act.endTime ? new Date(act.endTime) : new Date(start.getTime() + 90 * 60000);
+
+      if (now >= start && now <= end && !ongoing) {
+        ongoing = act;
+      } else if (end < now) {
+        past.push(act);
+      } else {
+        upcoming.push(act);
+      }
+    }
+
+    const focusAct = ongoing || upcoming[0] || past[past.length - 1] || null;
+    return {
+      past3to5: past.slice(-5).reverse(),
+      ongoingAct: ongoing,
+      nextNearestAct: upcoming[0] || null,
+      upcoming3to5: upcoming.slice(0, 5),
+      focusAct: focusAct
+    };
+  }
+
+  function updateEverySecondTick() {
+    const now = getNowDate();
+    document.getElementById('liveClockText').textContent =
+      now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' • ' +
+      now.toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' });
+
+    const { ongoingAct, nextNearestAct } = partitionTimeline(now);
+    const cdBanner = document.getElementById('countdownBanner');
+
+    if (!ongoingAct && nextNearestAct) {
+      const targetMs = new Date(nextNearestAct.startTime).getTime();
+      const diffSec = Math.max(0, Math.floor((targetMs - now.getTime()) / 1000));
+
+      const days = Math.floor(diffSec / 86400);
+      const hours = Math.floor((diffSec % 86400) / 3600);
+      const mins = Math.floor((diffSec % 3600) / 60);
+      const secs = diffSec % 60;
+
+      cdBanner.style.display = 'block';
+      document.getElementById('countdownTargetTitle').textContent =
+        `🎯 Sắp diễn ra: ${nextNearestAct.title} (${formatTimeHM(new Date(nextNearestAct.startTime))})`;
+      document.getElementById('cdDays').textContent = String(days).padStart(2, '0');
+      document.getElementById('cdHours').textContent = String(hours).padStart(2, '0');
+      document.getElementById('cdMins').textContent = String(mins).padStart(2, '0');
+      document.getElementById('cdSecs').textContent = String(secs).padStart(2, '0');
+    } else {
+      cdBanner.style.display = 'none';
+    }
+  }
+
+  function renderAllTimelineSections() {
+    updateEverySecondTick();
+    const now = getNowDate();
+    const { past3to5, ongoingAct, nextNearestAct, upcoming3to5, focusAct } = partitionTimeline(now);
+
+    document.getElementById('tripTitleText').textContent = `📅 ${tripData.tripTitle || 'Lịch Trình Du Lịch Nhóm'}`;
+    document.getElementById('tripCountText').textContent = `${(tripData.activities || []).length} chặng`;
+
+    if (focusAct) {
+      const distInfo = (userCoords && focusAct.lat)
+        ? ` • Cách bạn ${calcDistKm(userCoords.lat, userCoords.lng, focusAct.lat, focusAct.lng).toFixed(1)} km`
+        : '';
+      document.getElementById('liveGpsText').textContent = `📍 ${focusAct.locationName.slice(0, 32)}${distInfo}`;
+    }
+
+    const currentBox = document.getElementById('currentMomentBox');
+    if (ongoingAct) {
+      currentBox.innerHTML = buildActivityCardHtml(ongoingAct, 'now', now);
+    } else if (nextNearestAct) {
+      currentBox.innerHTML = `
+        <div style="background:#eff6ff; border:1px dashed #60a5fa; border-radius:12px; padding:12px; font-size:13px; color:#1e3a8a; margin-bottom:8px;">
+          ⏳ Đang đếm ngược tới hoạt động gần nhất: <b>${escapeHtml(nextNearestAct.title)}</b> lúc <b>${formatTimeHM(new Date(nextNearestAct.startTime))}</b>.
+        </div>
+      `;
+    } else {
+      currentBox.innerHTML = `<div style="padding:12px; font-size:13px; color:#64748b;">Tất cả các hoạt động trong lịch trình đã hoàn tất!</div>`;
+    }
+
+    document.getElementById('upcomingListBox').innerHTML = upcoming3to5.length > 0
+      ? upcoming3to5.map(act => buildActivityCardHtml(act, 'upcoming', now)).join('')
+      : `<div style="padding:10px; font-size:13px; color:#64748b;">Không còn hoạt động sắp tới.</div>`;
+
+    document.getElementById('pastListBox').innerHTML = past3to5.length > 0
+      ? past3to5.map(act => buildActivityCardHtml(act, 'past', now)).join('')
+      : `<div style="padding:10px; font-size:13px; color:#64748b;">Chưa có hoạt động nào đã qua.</div>`;
+
+    renderGeneralNotes();
+    renderExpensesSection();
+    renderPoiSection();
+  }
+
+  function renderNoteBubbleHtml(n) {
+    const photos = n.photos || [];
+    const photosHtml = photos.length > 0
+      ? `<div class="note-photo-grid">` +
+        photos.map(p => `
+          <div class="note-photo-item">
+            <a href="${p.viewUrl || p.thumbUrl}" target="_blank" title="Bấm để xem ảnh lớn trên Drive">
+              <img src="${p.thumbUrl}">
+            </a>
+            <a href="${p.downloadUrl || p.viewUrl}" target="_blank" class="note-photo-dl">⬇️ Tải</a>
+          </div>
+        `).join('') +
+        `</div>`
+      : '';
+
+    return `
+      <div class="note-bubble">
+        <span class="note-who">💬 ${escapeHtml(n.author)}:</span>
+        <span>${escapeHtml(n.text || '')}</span>
+        <span class="note-when">${escapeHtml(n.time || '')}</span>
+        ${photosHtml}
+      </div>
+    `;
+  }
+
+  function buildActivityCardHtml(act, mode, now) {
+    const start = new Date(act.startTime);
+    const end = act.endTime ? new Date(act.endTime) : new Date(start.getTime() + 90 * 60000);
+    const timeText = `${formatTimeHM(start)} – ${formatTimeHM(end)} (${start.getDate()}/${start.getMonth() + 1})`;
+
+    let badgeRight = '';
+    if (mode === 'now') {
+      const minsLeft = Math.max(1, Math.round((end - now) / 60000));
+      badgeRight = `<span style="background:#15803d;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;">⚡ ĐANG DIỄN RA (Còn ${minsLeft}p)</span>`;
+    } else if (mode === 'upcoming') {
+      const waitMins = Math.max(1, Math.round((start - now) / 60000));
+      const waitStr = waitMins >= 60 ? `Còn ${Math.floor(waitMins / 60)}h ${waitMins % 60}p` : `Còn ${waitMins} phút`;
+      badgeRight = `<span style="background:#dbeafe;color:#1e40af;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;">⏳ ${waitStr}</span>`;
+    } else {
+      badgeRight = `<span style="background:#e2e8f0;color:#475569;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;">✓ Đã qua</span>`;
+    }
+
+    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(act.locationName || act.title)}`;
+    const notes = act.notes || [];
+    const notesListHtml = notes.length > 0
+      ? notes.map(n => renderNoteBubbleHtml(n)).join('')
+      : `<div style="font-size:12px; color:#94a3b8; margin-bottom:4px;">Chưa có Note hoặc ảnh chụp nào tại chặng này.</div>`;
+
+    return `
+      <div class="act-card ${mode}">
+        <div class="act-top">
+          <span class="act-time-pill">🕒 ${timeText}</span>
+          ${badgeRight}
+        </div>
+        <div class="act-name">${escapeHtml(act.title)}</div>
+        <div class="act-place">
+          <span>📍 ${escapeHtml(act.locationName)}</span>
+          <a href="${mapUrl}" target="_blank">👉 Bản đồ</a>
+        </div>
+        ${act.tips ? `<div class="act-tips-box">⚠️ <b>Lưu ý:</b> ${escapeHtml(act.tips)}</div>` : ''}
+
+        <div class="act-notes-area">
+          <div style="font-size:11.5px; font-weight:700; color:#475569; margin-bottom:5px;">
+            📝 Note & Ảnh kỷ niệm của nhóm (${notes.length}):
+          </div>
+          ${notesListHtml}
+          <div id="pendingPhotos_${act.id}" class="pending-photos-strip"></div>
+          <div class="note-form">
+            <label class="btn-cam-icon" title="Chụp hoặc chọn ảnh tải lên thư mục Drive chung">
+              📷 Ảnh
+              <input type="file" accept="image/*" multiple style="display:none;" onchange="preparePhotosForNote('${act.id}', this.files)">
+            </label>
+            <input type="text" id="inpNote_${act.id}" placeholder="Viết note hoặc đính kèm ảnh (${escapeHtml(memberName || 'Khách')})..." onkeydown="if(event.key==='Enter') submitNoteWithPhotos('${act.id}')">
+            <button class="btn btn-primary btn-sm" id="btnSend_${act.id}" onclick="submitNoteWithPhotos('${act.id}')">Gửi</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderGeneralNotes() {
+    const box = document.getElementById('generalNotesBox');
+    const notes = tripData.generalNotes || [];
+    if (notes.length === 0) {
+      box.innerHTML = `<div style="font-size:12px; color:#94a3b8;">Chưa có ghi chú chung.</div>`;
+      return;
+    }
+    box.innerHTML = notes.map(n => renderNoteBubbleHtml(n)).join('');
+  }
+
+  // ==================== THỜI TIẾT & ĐỊA ĐIỂM BÁN KÍNH 2KM ====================
+  function initGeolocationAndWeather() {
+    renderAllTimelineSections();
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          renderAllTimelineSections();
+          refreshWeatherAndNearbyForActiveAct();
+        },
+        () => refreshWeatherAndNearbyForActiveAct(),
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    } else {
+      refreshWeatherAndNearbyForActiveAct();
+    }
+  }
+
+  async function refreshWeatherAndNearbyForActiveAct() {
+    const { focusAct } = partitionTimeline(getNowDate());
+    const lat = (focusAct && focusAct.lat) ? focusAct.lat : (userCoords ? userCoords.lat : 21.0285);
+    const lng = (focusAct && focusAct.lng) ? focusAct.lng : (userCoords ? userCoords.lng : 105.8542);
+    const placeName = focusAct ? focusAct.locationName : 'Vị trí hiện tại';
+
+    document.getElementById('weatherPlaceLabel').textContent = placeName.slice(0, 24);
+    document.getElementById('poiCenterLabel').textContent = `Quanh ${placeName.slice(0, 18)}`;
+
+    fetchWeatherOpenMeteo(lat, lng);
+    fetchOsmPlaces2Km(lat, lng);
+  }
+
+  async function fetchWeatherOpenMeteo(lat, lng) {
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&timezone=auto&forecast_days=2`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data && data.current) {
+        document.getElementById('wNowTemp').textContent = `${Math.round(data.current.temperature_2m)}°C`;
+        document.getElementById('wNowDesc').textContent = wmoText(data.current.weather_code);
+        document.getElementById('wNowWind').textContent = `💨 Gió: ${Math.round(data.current.wind_speed_10m)} km/h`;
+        document.getElementById('wNowHum').textContent = `💧 Ẩm: ${data.current.relative_humidity_2m}%`;
+      }
+
+      if (data && data.hourly && data.hourly.time) {
+        const curHourPrefix = new Date().toISOString().slice(0, 13);
+        let idx0 = data.hourly.time.findIndex(t => t.startsWith(curHourPrefix));
+        if (idx0 === -1) idx0 = new Date().getHours();
+
+        let html = '';
+        for (let h = 1; h <= 5; h++) {
+          const i = idx0 + h;
+          if (i < data.hourly.time.length) {
+            const hm = data.hourly.time[i].slice(11, 16);
+            const t = Math.round(data.hourly.temperature_2m[i]);
+            const rain = data.hourly.precipitation_probability ? data.hourly.precipitation_probability[i] : 0;
+            const ico = wmoIcon(data.hourly.weather_code[i]);
+            html += `
+              <div class="hour-cell">
+                <div>${hm}</div>
+                <div style="font-size:17px;">${ico}</div>
+                <b>${t}°C</b>
+                <div style="color:#0284c7;font-size:10.5px;font-weight:700;">🌧️${rain}%</div>
+              </div>
+            `;
+          }
+        }
+        document.getElementById('hourlyWeatherBox').innerHTML = html;
+      }
+    } catch (e) {}
+  }
+
+  function wmoText(c) {
+    if (c === 0) return '☀️ Trời nắng đẹp, quang mây';
+    if (c <= 3) return '⛅ Có mây mát mẻ';
+    if (c <= 48) return '🌫️ Sương mù nhẹ';
+    if (c <= 67) return '🌧️ Mưa nhỏ rải rác';
+    if (c <= 82) return '🌧️ Mưa rào (Nhớ chuẩn bị ô/áo mưa)';
+    return '⛈️ Có dông';
+  }
+
+  function wmoIcon(c) {
+    if (c === 0) return '☀️';
+    if (c <= 3) return '⛅';
+    if (c <= 48) return '🌫️';
+    if (c <= 82) return '🌧️';
+    return '⛈️';
+  }
+
+  async function fetchOsmPlaces2Km(lat, lng) {
+    try {
+      const q = `[out:json][timeout:8];(node["amenity"~"restaurant|cafe"](around:2000,${lat},${lng});node["tourism"~"attraction|museum|viewpoint"](around:2000,${lat},${lng}););out body 30;`;
+      const res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: q });
+      const data = await res.json();
+
+      const f = [], c = [], s = [];
+      (data.elements || []).forEach(el => {
+        if (!el.tags || !el.tags.name) return;
+        const dKm = calcDistKm(lat, lng, el.lat, el.lon);
+        if (dKm > 2.0) return;
+        const obj = {
+          name: el.tags.name,
+          desc: el.tags['addr:street'] ? `Đường ${el.tags['addr:street']}` : 'Địa điểm thực tế trên bản đồ (<2km)',
+          distKm: Number(dKm.toFixed(2))
+        };
+        if (el.tags.amenity === 'cafe') c.push(obj);
+        else if (el.tags.amenity === 'restaurant') f.push(obj);
+        else s.push(obj);
+      });
+
+      osmNearbyCache = { food: f.slice(0, 5), cafe: c.slice(0, 5), sight: s.slice(0, 5) };
+      renderPoiSection();
+    } catch (e) {
+      renderPoiSection();
+    }
+  }
+
+  function switchPoiTab(tab, btn) {
+    currentPoiTab = tab;
+    document.querySelectorAll('.poi-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderPoiSection();
+  }
+
+  function renderPoiSection() {
+    const box = document.getElementById('poiItemsBox');
+    const { focusAct } = partitionTimeline(getNowDate());
+
+    const aiList = (focusAct && focusAct.nearby2km && focusAct.nearby2km[currentPoiTab])
+      ? focusAct.nearby2km[currentPoiTab]
+      : [];
+    const merged = [...aiList, ...(osmNearbyCache[currentPoiTab] || [])].slice(0, 7);
+
+    if (merged.length === 0) {
+      box.innerHTML = `<div style="padding:10px; font-size:12.5px; color:#64748b;">Đang tải các địa điểm thú vị trong bán kính 2km...</div>`;
+      return;
+    }
+
+    box.innerHTML = merged.map(item => {
+      const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name)}`;
+      return `
+        <div class="poi-card">
+          <div>
+            <div class="poi-title">${escapeHtml(item.name)}</div>
+            <div class="poi-sub">${escapeHtml(item.desc || '')}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="poi-km">${item.distKm ? item.distKm + ' km' : '≤ 2km'}</span>
+            <a href="${mapUrl}" target="_blank" class="btn btn-secondary btn-sm">Chỉ đường</a>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ==================== UPLOAD LỊCH TRÌNH & AI PHÂN TÍCH ====================
+  function openOnboardingModal() {
+    document.getElementById('onboardingModal').classList.add('open');
+  }
+
+  function closeOnboardingModal() {
+    document.getElementById('onboardingModal').classList.remove('open');
+  }
+
+  function saveMemberAndEnter() {
+    const name = document.getElementById('inpMemberName').value.trim();
+    if (!name) {
+      showModalAlert('⚠️ Vui lòng nhập Tên của bạn ở mục số 1!', 'error');
+      return;
+    }
+    memberName = name;
+    localStorage.setItem('gt_member_name', name);
+    document.getElementById('topMemberName').textContent = name;
+    ensureMemberInLocalList(name);
+
+    const url = document.getElementById('inpGasUrl').value.trim();
+    if (url) {
+      gasWebAppUrl = url;
+      localStorage.setItem('gt_gas_url', url);
+    }
+
+    saveLocalTrip();
+    renderAllTimelineSections();
+    closeOnboardingModal();
+    syncTripFromServer(true);
+  }
+
+  async function handleUploadItineraryFile(file) {
+    if (!file) return;
+    showModalAlert(`⏳ Đang đọc file <b>${escapeHtml(file.name)}</b>...`, 'info');
+    const lower = file.name.toLowerCase();
+    uploadedFilePayload = null;
+
+    try {
+      if (lower.endsWith('.docx')) {
+        const buf = await file.arrayBuffer();
+        const res = await mammoth.extractRawText({ arrayBuffer: buf });
+        document.getElementById('inpRawItinerary').value = res.value.trim();
+        showModalAlert(`✅ Đã đọc nội dung Word! Bấm <b>"🚀 AI Phân Tích & Cập Nhật Cho Nhóm"</b>.`, 'success');
+      } else if (lower.endsWith('.txt') || lower.endsWith('.md')) {
+        const txt = await file.text();
+        document.getElementById('inpRawItinerary').value = txt.trim();
+        showModalAlert(`✅ Đã nạp nội dung file! Bấm <b>"🚀 AI Phân Tích & Cập Nhật Cho Nhóm"</b>.`, 'success');
+      } else if (lower.endsWith('.pdf') || file.type.startsWith('image/')) {
+        if (lower.endsWith('.pdf')) {
+          const buf = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+          let txt = '';
+          for (let p = 1; p <= pdf.numPages; p++) {
+            const page = await pdf.getPage(p);
+            const tc = await page.getTextContent();
+            txt += tc.items.map(i => i.str).join(' ') + '\n';
+          }
+          if (txt.trim().length > 20) {
+            document.getElementById('inpRawItinerary').value = txt.trim();
+          }
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          uploadedFilePayload = {
+            base64: e.target.result,
+            mimeType: file.type || 'application/pdf'
+          };
+          showModalAlert(`✅ Đã đính kèm file <b>${escapeHtml(file.name)}</b>! Bấm <b>"🚀 AI Phân Tích"</b>.`, 'success');
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      showModalAlert(`❌ Lỗi đọc file: ${err.message}`, 'error');
+    }
+  }
+
+  async function submitItineraryToAi() {
+    const name = document.getElementById('inpMemberName').value.trim() || 'Thành viên';
+    memberName = name;
+    localStorage.setItem('gt_member_name', name);
+    document.getElementById('topMemberName').textContent = name;
+
+    const url = (document.getElementById('inpGasUrl').value.trim() || gasWebAppUrl).trim();
+    if (!url) {
+      showModalAlert('⚠️ Vui lòng dán đường link Google Apps Script (/exec) vào mục số 2!', 'error');
+      return;
+    }
+    gasWebAppUrl = url;
+    localStorage.setItem('gt_gas_url', url);
+
+    const rawText = document.getElementById('inpRawItinerary').value.trim();
+    if (!rawText && !uploadedFilePayload) {
+      showModalAlert('⚠️ Vui lòng chọn file lịch trình hoặc dán văn bản lịch trình vào mục số 3!', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnRunAiAnalyze');
+    btn.disabled = true;
+    showModalAlert('⏳ AI đang phân tích lịch trình và đồng bộ Kho Ảnh, Sheet Note & Sheet Chi Phí cho đoàn...', 'info');
+
+    try {
+      const res = await callGasBackend({
+        action: 'analyzeItinerary',
+        uploaderName: memberName,
+        rawText: rawText,
+        fileBase64: uploadedFilePayload ? uploadedFilePayload.base64 : '',
+        mimeType: uploadedFilePayload ? uploadedFilePayload.mimeType : ''
+      });
+
+      if (!res || !res.success || !res.tripData) {
+        throw new Error(res ? res.error : 'Không nhận được kết quả từ AI');
+      }
+
+      tripData = res.tripData;
+      saveLocalTrip();
+      backToRealTime();
+      showModalAlert(`✅ Đã tạo lịch trình gồm <b>${tripData.activities.length} hoạt động</b> kèm Sheet Chi Phí & Hoá Đơn chung!`, 'success');
+      setTimeout(() => closeOnboardingModal(), 1000);
+    } catch (err) {
+      showModalAlert(`❌ Lỗi: ${err.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function resetDemoTrip() {
+    createDefaultSampleTrip();
+    renderAllTimelineSections();
+    refreshWeatherAndNearbyForActiveAct();
+    showModalAlert('✅ Đã nạp lịch trình mẫu khớp với ngày hôm nay!', 'success');
+  }
+
+  function createDefaultSampleTrip() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const dStr = `${yyyy}-${mm}-${dd}`;
+
+    tripData = {
+      tripTitle: `Du Lịch Nhóm Hà Nội - Hồ Tây (${dd}/${mm})`,
+      members: ['Minh', 'Hùng', 'Lan', 'Mai'],
+      generalNotes: [
+        { author: 'Minh', time: '07:30', text: 'Xe 16 chỗ đón đoàn tại Nhà Hát Lớn. SĐT tài xế: 0912.345.678.', photos: [] }
+      ],
+      expenses: [
+        {
+          id: 'exp_demo_1',
+          time: '08:15',
+          payer: 'Hùng',
+          category: 'Ăn uống / Nhà hàng',
+          note: 'Ăn sáng Phở Bát Đàn cho cả nhóm',
+          amount: 560000,
+          currency: 'VND',
+          receipts: []
+        },
+        {
+          id: 'exp_demo_2',
+          time: '09:30',
+          payer: 'Lan',
+          category: 'Vé tham quan / Vui chơi',
+          note: 'Vé vào cổng Hoàng Thành Thăng Long',
+          amount: 280000,
+          currency: 'VND',
+          receipts: []
+        }
+      ],
+      activities: [
+        {
+          id: 'act_1',
+          startTime: `${dStr}T07:30`,
+          endTime: `${dStr}T09:00`,
+          title: 'Ăn sáng Phở Bát Đàn & Cafe Phố Cổ',
+          locationName: '49 Bát Đàn, Hoàn Kiếm, Hà Nội',
+          lat: 21.0338, lng: 105.8458,
+          tips: 'Đi sớm xếp hàng lấy phở nhanh, gửi xe bên đối diện.',
+          notes: [{ author: 'Hùng', time: '07:45', text: 'Đã giữ 2 bàn dài bên trong cho nhóm!', photos: [] }],
+          nearby2km: {
+            food: [{ name: 'Phở Gia Truyền Bát Đàn', desc: '49 Bát Đàn', distKm: 0.05 }, { name: 'Bún Chả Hàng Quạt', desc: 'Ngõ 74 Hàng Quạt', distKm: 0.35 }],
+            cafe: [{ name: 'Cafe Giảng', desc: '39 Nguyễn Hữu Huân', distKm: 0.7 }, { name: 'Loading T Cafe', desc: '8 Chân Cầm', distKm: 0.45 }],
+            sight: [{ name: 'Nhà Thờ Lớn Hà Nội', desc: '40 Nhà Chung', distKm: 0.55 }]
+          }
+        },
+        {
+          id: 'act_2',
+          startTime: `${dStr}T09:15`,
+          endTime: `${dStr}T11:30`,
+          title: 'Tham quan Hoàng Thành Thăng Long & Chụp ảnh nhóm',
+          locationName: '19C Hoàng Diệu, Ba Đình, Hà Nội',
+          lat: 21.0341, lng: 105.8401,
+          tips: 'Vé 70.000đ/người. Mặc trang phục sáng màu chụp ảnh rất nổi.',
+          notes: [],
+          nearby2km: {
+            food: [{ name: 'Bánh Tôm Hồ Tây', desc: 'Số 1 Thanh Niên', distKm: 1.4 }],
+            cafe: [{ name: 'Cư Xá Cafe', desc: 'Tôn Thất Thiệp', distKm: 0.6 }],
+            sight: [{ name: 'Phố Phan Đình Phùng', desc: 'Hàng sấu cổ thụ', distKm: 0.6 }]
+          }
+        },
+        {
+          id: 'act_3',
+          startTime: `${dStr}T12:00`,
+          endTime: `${dStr}T14:00`,
+          title: 'Ăn trưa Chả Cá Lăng & Nghỉ trưa',
+          locationName: 'Chả Cá Thăng Long - 6B Đường Thành',
+          lat: 21.0318, lng: 105.8475,
+          tips: 'Đã đặt bàn tầng 2 tên Minh.',
+          notes: [],
+          nearby2km: {
+            food: [{ name: 'Chả Cá Thăng Long', desc: '6B Đường Thành', distKm: 0.05 }],
+            cafe: [{ name: 'All Day Coffee', desc: '37 Quang Trung', distKm: 0.9 }],
+            sight: [{ name: 'Chợ Đồng Xuân', desc: 'Mua quà đặc sản', distKm: 0.8 }]
+          }
+        },
+        {
+          id: 'act_4',
+          startTime: `${dStr}T15:00`,
+          endTime: `${dStr}T17:30`,
+          title: 'Cafe chiều & Đạp xe quanh Hồ Tây',
+          locationName: 'Phố Từ Hoa, Quảng An, Tây Hồ',
+          lat: 21.0625, lng: 105.8294,
+          tips: 'Thuê xe đạp tại đầu đường Nguyễn Đình Thi (50k/xe).',
+          notes: [],
+          nearby2km: {
+            food: [{ name: 'Phở Cuốn Hương Mai', desc: '25 Ngũ Xã', distKm: 1.2 }],
+            cafe: [{ name: 'Maison de Tet Decor', desc: '26 Quảng Bá', distKm: 0.8 }],
+            sight: [{ name: 'Chùa Trấn Quốc', desc: 'Đường Thanh Niên', distKm: 1.1 }]
+          }
+        }
+      ]
+    };
+    saveLocalTrip();
+  }
+
+  function calcDistKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function formatTimeHM(d) {
+    return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function showModalAlert(html, type) {
+    const el = document.getElementById('modalAlert');
+    el.className = 'alert-box ' + type;
+    el.innerHTML = html;
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+</script>
+</body>
+</html>
